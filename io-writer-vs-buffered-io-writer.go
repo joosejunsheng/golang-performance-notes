@@ -16,6 +16,7 @@ type BufferedWriter struct {
 	bufferEndIndex int
 }
 
+// Option function to modify BufferedWriter
 type Option func(*BufferedWriter)
 
 func NewBufferedWriter(options ...Option) *BufferedWriter {
@@ -32,12 +33,14 @@ func NewBufferedWriter(options ...Option) *BufferedWriter {
 	return bw
 }
 
+// WithFile, option to set file for BufferedWriter
 func WithFile(file *os.File) Option {
 	return func(bw *BufferedWriter) {
 		bw.file = file
 	}
 }
 
+// WithBufferSize, option to set buffer size for BufferedWriter
 func WithBufferSize(size int) Option {
 	return func(bw *BufferedWriter) {
 		bw.buffer = make([]byte, size)
@@ -46,20 +49,26 @@ func WithBufferSize(size int) Option {
 
 func (w *BufferedWriter) Write(content []byte) {
 	if len(content) >= len(w.buffer) {
+		// Write directly into file since buffer size is not enough for content
+		// Write current buffered content into file
 		w.Flush()
+		// Write the entire content into file first
 		w.file.Write(content)
 	} else {
 		if w.bufferEndIndex+len(content) > len(w.buffer) {
+			// Write current buffered content into file since buffer size is not enough for current buffered + incoming content
 			w.Flush()
 		}
 
+		// Copy incoming content into buffer
 		copy(w.buffer[w.bufferEndIndex:], content)
-
+		// Update buffer end index
 		w.bufferEndIndex += len(content)
 	}
 }
 
 func (w *BufferedWriter) Flush() {
+	// Write into file and update end index to 0
 	w.file.Write(w.buffer[0:w.bufferEndIndex])
 	w.bufferEndIndex = 0
 }
