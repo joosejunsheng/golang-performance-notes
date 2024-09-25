@@ -77,21 +77,25 @@ func (w *BufferedWriter) WriteString(content string) {
 	w.Write([]byte(content))
 }
 
-func WriteNormally(filePath string) {
-	outputFile, err := os.OpenFile(filePath, os.O_CREATE, 0666)
+func WriteNormally(filePath string, isLongContent bool) {
+	outputFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		panic(err)
 	}
 
 	defer outputFile.Close()
 
-	for i := 0; i < 999999; i++ {
+	if isLongContent {
+		for i := 0; i < 999999; i++ {
+			outputFile.WriteString(SOME_TEXT)
+		}
+	} else {
 		outputFile.WriteString(SOME_TEXT)
 	}
 }
 
-func WriteUsingBuffer(filePath string) {
-	outputFile, err := os.OpenFile(filePath, os.O_CREATE, 0666)
+func WriteUsingBuffer(filePath string, isLongContent bool) {
+	outputFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +108,11 @@ func WriteUsingBuffer(filePath string) {
 	)
 	defer writer.Flush()
 
-	for i := 0; i < 999999; i++ {
+	if isLongContent {
+		for i := 0; i < 999999; i++ {
+			writer.WriteString(SOME_TEXT)
+		}
+	} else {
 		writer.WriteString(SOME_TEXT)
 	}
 }
@@ -114,14 +122,14 @@ func main() {
 	bufferedFilePath := "buffered_write.txt"
 
 	start := time.Now()
-	WriteNormally(normalFilePath)
+	WriteNormally(normalFilePath, true)
 	elapsed := time.Since(start)
 	fmt.Printf("WriteNormally took %s\n", elapsed)
 
 	os.Remove(normalFilePath)
 
 	start = time.Now()
-	WriteUsingBuffer(bufferedFilePath)
+	WriteUsingBuffer(bufferedFilePath, true)
 	elapsed = time.Since(start)
 	fmt.Printf("WriteUsingBuffer took %s\n", elapsed)
 
